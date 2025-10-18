@@ -1,6 +1,10 @@
 #ifndef TRANSACCION_H
 #define TRANSACCION_H
 
+
+/* Archivo donde se guarda la última referencia usada (persistente entre ejecuciones) */
+#define REF_FILE "last_ref.dat"
+
 typedef enum {
     TIPO_COMPRA,
     TIPO_ANULACION,
@@ -21,6 +25,7 @@ typedef struct {
 int generarReferencia();
 void guardarTransaccion(const Transaccion *t);
 void listarTransacciones();
+int obtenerCantidadTransacciones();
 void limpiarConsola();
 
 #endif

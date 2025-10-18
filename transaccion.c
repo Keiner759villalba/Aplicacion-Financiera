@@ -1,10 +1,34 @@
 #include "transaccion.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+
+int transacciones_guardadas = 0;
 
 int generarReferencia() {
-    static int consecutivo = 1;
-    return consecutivo++;
+    int last = 0;
+    FILE *f = fopen(REF_FILE, "r");
+    if (f) {
+        if (fscanf(f, "%d", &last) != 1) {
+            last = 0;
+        }
+        fclose(f);
+    }
+    int next = last + 1;
+
+    /* reescribir el archivo con la nueva referencia */
+    f = fopen(REF_FILE, "w");
+    if (!f) {
+        /* fallo al escribir: informar por stderr y devolver algo razonable */
+        fprintf(stderr, "Error abriendo %s para escribir: %s\n", REF_FILE, strerror(errno));
+        return next; /* devolver el siguiente aunque no se haya persistido */
+    }
+    fprintf(f, "%d\n", next);
+    fflush(f);
+    fclose(f);
+
+    return next;
 }
 
 void guardarTransaccion(const Transaccion *t) {
@@ -14,6 +38,7 @@ void guardarTransaccion(const Transaccion *t) {
         return;
     }
     fwrite(t, sizeof(Transaccion), 1, f);
+    transacciones_guardadas++;
     fclose(f);
 }
 
@@ -33,6 +58,10 @@ void listarTransacciones() {
 
     fclose(f);
 }
+int obtenerCantidadTransacciones() {
+    return transacciones_guardadas;
+}
+
 
 void limpiarConsola() {
 #ifdef _WIN32
