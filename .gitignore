@@ -1,0 +1,19 @@
+# Archivos binarios compilados
+main
+*.exe
+*.out
+
+# Archivos de datos generados
+*.dat
+
+# Carpetas auxiliares o temporales
+app/
+
+# Archivos de log o temporales
+*.log
+*.tmp
+*~
+
+# Configuraciones de IDEs (si usas alguna)
+.vscode/
+.idea/
