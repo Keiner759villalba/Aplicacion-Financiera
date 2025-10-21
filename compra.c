@@ -92,6 +92,9 @@ void realizarCompra(Transaccion *t) {
     t->monto = monto;
     strncpy(t->pan, pan, sizeof(t->pan) - 1);
     t->pan[sizeof(t->pan) - 1] = '\0';
+    /* Copiar el CVV validado a la transacción para que pueda ser verificado posteriormente */
+    strncpy(t->cvv, cvv, sizeof(t->cvv) - 1);
+    t->cvv[sizeof(t->cvv) - 1] = '\0';
 
     time_t now = time(NULL);
     struct tm *lt = localtime(&now);

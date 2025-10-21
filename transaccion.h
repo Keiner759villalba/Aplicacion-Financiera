@@ -19,6 +19,7 @@ typedef struct {
     TipoTransaccion tipo;
     double monto;
     char pan[20];
+    char cvv[5];
     char fecha[10];
     int anulada; /* 0 = no, 1 = sí */
 } Transaccion;
