@@ -3,6 +3,24 @@
 #include <string.h>
 #include "transaccion.h"
 
+void limpiarBufferEntrada(void)
+{
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+    {
+    }
+}
+
+void quitarSaltoDeLinea(char *str)
+{
+    if (!str)
+        return;
+    size_t len = strlen(str);
+    if (len > 0 && str[len - 1] == '\n')
+        str[len - 1] = '\0';
+}
+
+
 void anularTransaccion()
 {
     int refTransaccion;
@@ -92,20 +110,4 @@ void anularTransaccion()
     }
 
     fclose(f);
-}
-void limpiarBufferEntrada(void)
-{
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF)
-    {
-    }
-}
-
-void quitarSaltoDeLinea(char *str)
-{
-    if (!str)
-        return;
-    size_t len = strlen(str);
-    if (len > 0 && str[len - 1] == '\n')
-        str[len - 1] = '\0';
 }

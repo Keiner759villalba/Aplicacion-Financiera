@@ -1,3 +1,4 @@
+#include "cierre.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "compra.h"
@@ -14,7 +15,7 @@ int main() {
         printf("=== MENÚ PRINCIPAL ===\n");
         printf("1. Realizar compra\n");
         printf("2. Anular transacción\n");
-        printf("3. Listar transacciones\n");
+        printf("3. Cierre de transacciones\n");
         printf("4. Salir\n");
         printf("======================\n");
         printf("Seleccione una opcion: ");
@@ -45,7 +46,7 @@ int main() {
 
             case 3:
                 limpiarConsola();
-                listarTransacciones();
+                mostrarCierre();
                 printf("\nPresione Enter para volver al menú...");
                 getchar(); getchar(); // doble getchar para pausar
 
