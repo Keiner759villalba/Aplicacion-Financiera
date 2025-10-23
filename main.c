@@ -1,96 +1,97 @@
-#include "cierre.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "compra.h"
 #include "transaccion.h"
 #include "anulacion.h"
 #include "reimpresion.h"
+#include "reporte.h"
+#include "cierre.h"
 
+// Prototipo para la pausa entre pantallas
+void pausar(void);
+
+// --- FUNCION PRINCIPAL ---
 int main() {
     int opcion;
-    Transaccion t;
     int continuar = 1;
+    Transaccion t;
 
     do {
         limpiarConsola();
-        printf("=== MENÚ PRINCIPAL ===\n");
-        printf("1. Realizar compra\n");
-        printf("2. Anular transacción\n");
-        printf("3. Cierre de transacciones\n");
-        printf("4. Reimpresión de transacciones\n");
-        printf("5. Salir\n");
-        printf("======================\n");
+
+        printf("=============================================\n");
+        printf("         SISTEMA FINANCIERO CONSOLA\n");
+        printf("=============================================\n");
+        printf("|   1 |  Realizar compra                    |\n");
+        printf("|   2 |  Anular transaccion                 |\n");
+        printf("|   3 |  Cierre de transacciones            |\n");
+        printf("|   4 |  Reimpresion de transacciones       |\n");
+        printf("|   5 |  Reporte de totales                 |\n");
+        printf("|   6 |  Salir                              |\n");
+        printf("=============================================\n");
         printf("Seleccione una opcion: ");
 
         if (scanf("%d", &opcion) != 1) {
-            printf("Entrada inválida. Intente de nuevo.\n");
-            while (getchar() != '\n'); // limpiar el buffer
+            printf("\nEntrada invalida. Intente de nuevo.\n");
+            while (getchar() != '\n');
             continue;
         }
 
+        limpiarConsola();
+
         switch (opcion) {
             case 1:
+                printf(">>> MODO COMPRA <<<\n\n");
                 realizarCompra(&t);
-                printf("\n¿Desea realizar otra compra? (1=Sí / 0=No): ");
+                printf("\nDesea realizar otra compra? (1=Si / 0=No): ");
                 if (scanf("%d", &continuar) != 1) {
-                    printf("Entrada inválida, regresando al menú...\n");
+                    printf("\nEntrada invalida, regresando al menu...\n");
                     while (getchar() != '\n');
                     continuar = 1;
                 }
                 break;
 
             case 2:
-                limpiarConsola();
+                printf(">>> MODO ANULACION <<<\n\n");
                 anularTransaccion();
-                printf("\nPresione Enter para volver al menú...");
-                getchar(); getchar(); // doble getchar para pausar
+                pausar();
                 break;
 
             case 3:
-                limpiarConsola();
+                printf(">>> CIERRE DE TRANSACCIONES <<<\n\n");
                 mostrarCierre();
-                printf("\nPresione Enter para volver al menú...");
-                getchar(); getchar(); // doble getchar para pausar
-
+                pausar();
                 break;
+
             case 4:
-                limpiarConsola();
-                {
-                    FILE *ftrans = fopen("transacciones.dat", "rb");
-                    if (!ftrans) {
-                        printf("No hay transacciones registradas para reimpresión.\n");
-                    } else {
-                        if (fseek(ftrans, 0, SEEK_END) != 0) {
-                            printf("No se pudo acceder al archivo de transacciones.\n");
-                        } else {
-                            long size = ftell(ftrans);
-                            if (size < (long)sizeof(Transaccion)) {
-                                printf("No hay transacciones válidas para reimpresión.\n");
-                            } else {
-                                /* Archivo existe y tiene al menos una transacción -> llamar módulo */
-                                ordenarTransaccionesAtrasAdelante();
-                            }
-                        }
-                        fclose(ftrans);
-                    }
-
-                    /* Consumir cualquier entrada pendiente y pausar */
-                    int c;
-                    while ((c = getchar()) != '\n' && c != EOF) { }
-                    printf("\nPresione Enter para volver al menú...");
-                    getchar();
-                }
+                printf(">>> REIMPRESION DE TRANSACCIONES <<<\n\n");
+                procesarReimpresion();  // definida en reimpresion.c
+                pausar();
                 break;
-            case 5: 
-                printf("Saliendo del programa...\n");
+
+            case 5:
+                printf(">>> REPORTE DE TOTALES <<<\n\n");
+                mostrarReporteTotales();
+                pausar();
+                break;
+
+            case 6:
+                printf("\nCerrando aplicacion...\n");
                 continuar = 0;
                 break;
 
             default:
-                printf("Opción inválida. Intente de nuevo.\n");
+                printf("\nOpcion invalida. Intente nuevamente.\n");
+                pausar();
                 break;
         }
     } while (continuar);
 
     return 0;
+}
+
+// --- FUNCIONES AUXILIARES ---
+void pausar(void) {
+    printf("\nPresione Enter para continuar...");
+    getchar(); getchar(); // dos veces por el salto de linea pendiente
 }
