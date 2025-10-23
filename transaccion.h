@@ -22,6 +22,7 @@ typedef struct {
     char cvv[5];
     char fecha[10];
     int anulada; /* 0 = no, 1 = sí */
+    struct Transaccion *sig;
 } Transaccion;
 
 int generarReferencia(void);
@@ -29,5 +30,6 @@ void guardarTransaccion(const Transaccion *t);
 void listarTransacciones(void);
 int obtenerCantidadTransacciones(void);
 void limpiarConsola(void);
+const char* validarFranquicia(const char *pan);
 
 #endif /* TRANSACCION_H */

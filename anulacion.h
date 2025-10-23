@@ -12,4 +12,7 @@
  */
 void anularTransaccion();
 
+void limpiarBufferEntrada(void);
+void quitarSaltoDeLinea(char *str);
+
 #endif

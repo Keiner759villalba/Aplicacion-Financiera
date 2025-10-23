@@ -18,4 +18,5 @@ int validarLump(const char *pan);
 int validarExpiracion(const char *mmYY);
 const char* validarFranquicia(const char *pan);
 
+
 #endif /* COMPRA_H */
