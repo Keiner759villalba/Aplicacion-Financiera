@@ -58,15 +58,24 @@ void listarTransacciones() {
 
     fclose(f);
 }
+
 int obtenerCantidadTransacciones() {
     return transacciones_guardadas;
 }
 
 
-void limpiarConsola() {
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
+
+/* Detecta la franquicia por el prefijo del PAN */
+const char* validarFranquicia(const char *pan) {
+    if (!pan) return "Desconocida";
+    if (strncmp(pan, "4", 1) == 0)
+        return "Visa";
+    else if (strncmp(pan, "5", 1) == 0)
+        return "MasterCard";
+    else if (strncmp(pan, "3", 1) == 0 && (pan[1] == '4' || pan[1] == '7'))
+        return "American Express";
+    else if (strncmp(pan, "6", 1) == 0)
+        return "Discover";
+    else
+        return "Desconocida";
 }

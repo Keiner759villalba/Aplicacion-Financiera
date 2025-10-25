@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include "transaccion.h"
 
-void mostrarReporteTotales(void) {
+int mostrarReporteTotales(void) {
     FILE *archivo = fopen("transacciones.dat", "rb");
     if (!archivo) {
         printf("Error: no se pudo abrir el archivo de transacciones.\n");
-        return;
+        return 1;
     }
 
     Transaccion t;
@@ -44,4 +44,5 @@ void mostrarReporteTotales(void) {
     printf("=============================\n\n");
     printf("Presione Enter para volver al menú...");
     getchar();
+    return 0;
 }

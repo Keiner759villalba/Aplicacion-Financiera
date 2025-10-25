@@ -10,7 +10,7 @@
  * valida los últimos 4 dígitos del PAN y el CVV,
  * y la marca como anulada sin eliminarla del archivo.
  */
-void anularTransaccion();
+int anularTransaccion();
 
 void limpiarBufferEntrada(void);
 void quitarSaltoDeLinea(char *str);

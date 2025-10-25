@@ -22,6 +22,6 @@ void montoTotalCierre(void);
  * Función principal del módulo de cierre: muestra el resumen,
  * pide confirmación y, si se acepta, elimina todas las transacciones.
  */
-void mostrarCierre(void);
+int mostrarCierre(void);
 
 #endif /* CIERRE_H */

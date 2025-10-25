@@ -76,7 +76,7 @@ void tiposDeTransaccionesCierre()
     printf("Reportes: %d\n", reportes);
 }
 
-void mostrarCierre()
+int mostrarCierre()
 {
     limpiarConsola();
     printf("=== CIERRE DE TRANSACCIONES ===\n\n");
@@ -90,7 +90,7 @@ void mostrarCierre()
     if (scanf("%d", &confirmar) != 1 || (confirmar != 0 && confirmar != 1))
     {
         printf("Entrada inválida. Cierre cancelado.\n");
-        return;
+        return 1;
     }
     else if (confirmar == 1)
     {
@@ -98,7 +98,7 @@ void mostrarCierre()
         if (!f)
         {
             printf("No se pudo abrir el archivo para limpiar.\n");
-            return;
+            return 1;
         }
         fclose(f);
         printf("✅ Archivo de transacciones vaciado correctamente.\n");
@@ -107,4 +107,5 @@ void mostrarCierre()
     {
         printf("\nCierre cancelado por el usuario.\n");
     }
+    return 0;
 }

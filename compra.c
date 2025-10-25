@@ -5,194 +5,141 @@
 #include <string.h>
 #include <time.h>
 
-/* Compatibilidad entre nombres de macro */
-#ifndef MAX_TRANSACCIONES
-#ifdef MAXCOMPRAS
-#define MAX_TRANSACCIONES MAXCOMPRAS
-#else
 #define MAX_TRANSACCIONES 20
-#endif
-#endif
-
-/* Contador de compras realizadas en esta ejecución (no persistente) */
 static int compras_realizadas = 0;
 
-/* ------------------- FUNCIONES PÚBLICAS ------------------- */
+static int leerCadena(const char *mensaje, char *dest, size_t tam);
+static void limpiarBuffer(void);
 
-void realizarCompra(Transaccion *t) {
+int realizarCompra(Transaccion *t) {
     char pan[20];
     char franquicia[32];
-    char expiry[6]; /* "MM/YY" + '\0' */
+    char expiry[6];
     char cvv[5];
     double monto;
 
-    if (!t) return;
+    if (!t) return 1;
 
-    /* Verificar límite de compras */
     if (compras_realizadas >= MAX_TRANSACCIONES) {
-        printf("Se alcanzó el número máximo de compras (%d). Operación cancelada.\n", MAX_TRANSACCIONES);
-        return;
+        printf("Se alcanzo el numero maximo de compras.\n");
+        return 1;
     }
 
-    limpiarConsola();
     printf("=== Realizar Compra ===\n");
 
-    printf("Ingrese el PAN (Primary Account Number): ");
-    if (scanf("%19s", pan) != 1) {
-        printf("Entrada inválida. Operación cancelada.\n");
-        return;
-    }
+    if (!leerCadena("Ingrese el PAN (Primary Account Number): ", pan, sizeof(pan)))
+        return 1;
     if (!validarPAN(pan)) {
-        printf("PAN inválido. Operación cancelada.\n");
-        return;
+        printf("PAN invalido.\n");
+        return 1;
     }
 
     const char *fr = validarFranquicia(pan);
     strncpy(franquicia, fr, sizeof(franquicia) - 1);
     franquicia[sizeof(franquicia) - 1] = '\0';
-    printf("Franquicia: %s\n", franquicia);
+    printf("Franquicia detectada: %s\n", franquicia);
 
-    /* solicitar y validar fecha de expiración en formato MM/YY */
-    printf("Ingrese la fecha de expiración (MM/YY): ");
-    if (scanf("%5s", expiry) != 1) {
-        printf("Entrada inválida. Operación cancelada.\n");
-        return;
-    }
+    if (!leerCadena("Ingrese la fecha de expiracion (MM/YY): ", expiry, sizeof(expiry)))
+        return 1;
     if (!validarExpiracion(expiry)) {
-        printf("Fecha de expiración inválida o tarjeta expirada. Operación cancelada.\n");
-        return;
+        printf("Fecha de expiracion invalida o tarjeta vencida.\n");
+        return 1;
     }
 
-    /* solicitar y validar CVV antes del monto */
-    printf("Ingrese CVV: ");
-    if (scanf("%4s", cvv) != 1) {
-        printf("Entrada inválida. Operación cancelada.\n");
-        return;
-    }
+    if (!leerCadena("Ingrese el CVV: ", cvv, sizeof(cvv)))
+        return 1;
     int cvvlen = strlen(cvv);
     if (!(cvvlen == 3 || cvvlen == 4)) {
-        printf("CVV inválido (debe tener 3 o 4 dígitos). Operación cancelada.\n");
-        return;
-    }
-    for (int i = 0; i < cvvlen; ++i) {
-        if (cvv[i] < '0' || cvv[i] > '9') {
-            printf("CVV inválido (solo dígitos). Operación cancelada.\n");
-            return;
-        }
+        printf("CVV invalido (3 o 4 digitos).\n");
+        return 1;
     }
 
     printf("Ingrese el monto de la compra: ");
     if (scanf("%lf", &monto) != 1 || monto <= 0.0) {
-        printf("Monto inválido. Operación cancelada.\n");
-        return;
+        printf("Monto invalido.\n");
+        limpiarBuffer();
+        return 1;
     }
+    limpiarBuffer();
 
-    /* Asignar valores a la transacción */
     t->referencia = generarReferencia();
     t->monto = monto;
     strncpy(t->pan, pan, sizeof(t->pan) - 1);
     t->pan[sizeof(t->pan) - 1] = '\0';
-    /* Copiar el CVV validado a la transacción para que pueda ser verificado posteriormente */
     strncpy(t->cvv, cvv, sizeof(t->cvv) - 1);
     t->cvv[sizeof(t->cvv) - 1] = '\0';
 
     time_t now = time(NULL);
     struct tm *lt = localtime(&now);
-    int day = lt ? lt->tm_mday : 0;
-    int mon = lt ? (lt->tm_mon + 1) : 0;
-    int yr  = lt ? ((lt->tm_year + 1900) % 100) : 0;
-    if (day < 0) day = 0; else if (day > 99) day %= 100;
-    if (mon  < 0) mon  = 0; else if (mon  > 99) mon  %= 100;
-    if (yr   < 0) yr   = 0; else if (yr   > 99) yr   %= 100;
-
-    /* Formatear fecha en buffer temporal y copiar de forma segura */
-    char tmpfecha[16];
-    snprintf(tmpfecha, sizeof tmpfecha, "%02d/%02d/%02d", day, mon, yr);
-    strncpy(t->fecha, tmpfecha, sizeof(t->fecha) - 1);
-    t->fecha[sizeof(t->fecha) - 1] = '\0';
-
+    snprintf(t->fecha, sizeof(t->fecha), "%02d/%02d/%02d",
+             lt->tm_mday, lt->tm_mon + 1, (lt->tm_year + 1900) % 100);
     t->tipo = TIPO_COMPRA;
     t->anulada = 0;
 
-    /* Guardar transacción en archivo */
     guardarTransaccion(t);
-
     compras_realizadas++;
 
-    printf("\n✅ Compra realizada con éxito!\n");
+    printf("\nCompra realizada con exito.\n");
     printf("Referencia: %d | Monto: %.2f | Franquicia: %s | Fecha: %s\n",
            t->referencia, t->monto, franquicia, t->fecha);
-}
 
-/* ------------------- FUNCIONES AUXILIARES ------------------- */
-
-/* Algoritmo de Luhn para validar el PAN */
-int validarLump(const char *pan) {
-    if (!pan) return 0;
-    int len = strlen(pan);
-    int sum = 0;
-    int alt = 0;
-    for (int i = len - 1; i >= 0; i--) {
-        if (pan[i] < '0' || pan[i] > '9') return 0;
-        int digit = pan[i] - '0';
-        if (alt) {
-            digit *= 2;
-            if (digit > 9) digit -= 9;
-        }
-        sum += digit;
-        alt = !alt;
-    }
-    return (sum % 10 == 0);
-}
-
-/* Valida formato y contenido del PAN */
-int validarPAN(const char *pan) {
-    if (!pan) return 0;
-    int len = strlen(pan);
-    if (len < 13 || len > 19) {
-        return 0; /* PAN debe tener entre 13 y 19 dígitos */
-    }
-    for (int i = 0; i < len; i++) {
-        if (pan[i] < '0' || pan[i] > '9') {
-            return 0; /* PAN debe contener solo dígitos */
-        }
-    }
-    return validarLump(pan);
-}
-
-/* Valida MM/YY y que no esté vencida */
-int validarExpiracion(const char *mmYY) {
-    if (!mmYY || strlen(mmYY) != 5) return 0;
-    if (mmYY[2] != '/') return 0;
-    for (int i = 0; i < 5; ++i) {
-        if (i == 2) continue;
-        if (mmYY[i] < '0' || mmYY[i] > '9') return 0;
-    }
-    int month = (mmYY[0]-'0')*10 + (mmYY[1]-'0');
-    int year = (mmYY[3]-'0')*10 + (mmYY[4]-'0');
-    if (month < 1 || month > 12) return 0;
-
-    time_t now = time(NULL);
-    struct tm *lt = localtime(&now);
-    int curMonth = lt ? (lt->tm_mon + 1) : 0;
-    int curYear = lt ? ((lt->tm_year + 1900) % 100) : 0;
-
-    if (year > curYear) return 1;
-    if (year == curYear && month >= curMonth) return 1;
     return 0;
 }
 
-/* Detecta la franquicia por el prefijo del PAN */
-const char* validarFranquicia(const char *pan) {
-    if (!pan) return "Desconocida";
-    if (strncmp(pan, "4", 1) == 0)
-        return "Visa";
-    else if (strncmp(pan, "5", 1) == 0)
-        return "MasterCard";
-    else if (strncmp(pan, "3", 1) == 0 && (pan[1] == '4' || pan[1] == '7'))
-        return "American Express";
-    else if (strncmp(pan, "6", 1) == 0)
-        return "Discover";
-    else
-        return "Desconocida";
+static int leerCadena(const char *mensaje, char *dest, size_t tam) {
+    printf("%s", mensaje);
+    if (fgets(dest, (int)tam, stdin) == NULL) {
+        printf("Error al leer la entrada.\n");
+        return 0;
+    }
+    size_t len = strlen(dest);
+    if (len > 0 && dest[len - 1] == '\n') dest[len - 1] = '\0';
+    if (strlen(dest) == 0) {
+        printf("No se permite campo vacio.\n");
+        return 0;
+    }
+    return 1;
+}
+
+static void limpiarBuffer(void) {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+int validarPAN(const char *pan) {
+    int len = (int)strlen(pan);
+    if (len < 13 || len > 19) return 0;
+
+    int suma = 0;
+    int doble = 0;
+    for (int i = len - 1; i >= 0; i--) {
+        int digito = pan[i] - '0';
+        if (digito < 0 || digito > 9) return 0;
+
+        if (doble) {
+            digito *= 2;
+            if (digito > 9) digito -= 9;
+        }
+        suma += digito;
+        doble = !doble;
+    }
+    return (suma % 10) == 0;
+}
+int validarExpiracion(const char *mmYY) {
+    if (strlen(mmYY) != 5 || mmYY[2] != '/') return 0;
+
+    int mes = (mmYY[0] - '0') * 10 + (mmYY[1] - '0');
+    int anio = (mmYY[3] - '0') * 10 + (mmYY[4] - '0');
+
+    if (mes < 1 || mes > 12) return 0;
+
+    time_t now = time(NULL);
+    struct tm *lt = localtime(&now);
+    int anioActual = (lt->tm_year + 1900) % 100;
+    int mesActual = lt->tm_mon + 1;
+
+    if (anio < anioActual || (anio == anioActual && mes < mesActual)) {
+        return 0; // Tarjeta vencida
+    }
+
+    return 1;
 }

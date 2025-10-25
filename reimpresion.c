@@ -8,18 +8,18 @@ typedef struct NodoTransaccion {
     Transaccion dato;
     struct NodoTransaccion *sig;
 } NodoTransaccion;
-void procesarReimpresion() {
+int procesarReimpresion() {
     FILE *ftrans = fopen("transacciones.dat", "rb");
     if (!ftrans) {
         printf("No hay transacciones registradas.\n");
-        return;
+        return 1;
     }
 
     // Mover puntero al final para verificar tamaño del archivo
     if (fseek(ftrans, 0, SEEK_END) != 0) {
         printf("Error al acceder al archivo de transacciones.\n");
         fclose(ftrans);
-        return;
+        return 1;
     }
 
     long size = ftell(ftrans);
@@ -28,11 +28,12 @@ void procesarReimpresion() {
     // Verifica si hay al menos una transaccion valida
     if (size < (long)sizeof(Transaccion)) {
         printf("No existen transacciones validas para reimpresion.\n");
-        return;
+        return 1;
     }
 
     printf("=== REIMPRESION DE TRANSACCIONES ===\n\n");
     ordenarTransaccionesAtrasAdelante();
+    return 0;
 }
 
 

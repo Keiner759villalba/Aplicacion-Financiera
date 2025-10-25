@@ -10,7 +10,7 @@
 
 #define ARCHIVO_TRANSACCIONES "transacciones.dat"
 
-void procesarReimpresion(void);
+int procesarReimpresion(void);
 void ordenarTransaccionesAtrasAdelante(void);
 const char* tipoTransaccionToString(TipoTransaccion tipo);
 

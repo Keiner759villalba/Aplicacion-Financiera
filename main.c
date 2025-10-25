@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "compra.h"
 #include "transaccion.h"
 #include "anulacion.h"
@@ -7,10 +8,11 @@
 #include "reporte.h"
 #include "cierre.h"
 
-// Prototipo para la pausa entre pantallas
+void limpiarConsola(void);
 void pausar(void);
+int leerOpcionMenu(void);
+int preguntarContinuar(const char *mensaje);
 
-// --- FUNCION PRINCIPAL ---
 int main() {
     int opcion;
     int continuar = 1;
@@ -29,69 +31,84 @@ int main() {
         printf("|   5 |  Reporte de totales                 |\n");
         printf("|   6 |  Salir                              |\n");
         printf("=============================================\n");
-        printf("Seleccione una opcion: ");
 
-        if (scanf("%d", &opcion) != 1) {
-            printf("\nEntrada invalida. Intente de nuevo.\n");
-            while (getchar() != '\n');
-            continue;
-        }
-
+        opcion = leerOpcionMenu();
         limpiarConsola();
 
         switch (opcion) {
             case 1:
-                printf(">>> MODO COMPRA <<<\n\n");
-                realizarCompra(&t);
-                printf("\nDesea realizar otra compra? (1=Si / 0=No): ");
-                if (scanf("%d", &continuar) != 1) {
-                    printf("\nEntrada invalida, regresando al menu...\n");
-                    while (getchar() != '\n');
-                    continuar = 1;
+                if (realizarCompra(&t) != 0) {
+                    printf("\nError en la compra.\n");
+                    if (!preguntarContinuar("Desea volver al menu principal? (1=Si / 0=Salir): "))
+                        continuar = 0;
+                } else {
+                    printf("\nCompra realizada correctamente.\n");
+                    if (!preguntarContinuar("Desea realizar otra compra? (1=Si / 0=No): "))
+                        continuar = 0;
                 }
                 break;
 
             case 2:
-                printf(">>> MODO ANULACION <<<\n\n");
                 anularTransaccion();
                 pausar();
                 break;
 
             case 3:
-                printf(">>> CIERRE DE TRANSACCIONES <<<\n\n");
                 mostrarCierre();
                 pausar();
                 break;
 
             case 4:
-                printf(">>> REIMPRESION DE TRANSACCIONES <<<\n\n");
-                procesarReimpresion();  // definida en reimpresion.c
+                procesarReimpresion();
                 pausar();
                 break;
 
             case 5:
-                printf(">>> REPORTE DE TOTALES <<<\n\n");
                 mostrarReporteTotales();
                 pausar();
                 break;
 
             case 6:
-                printf("\nCerrando aplicacion...\n");
                 continuar = 0;
                 break;
 
             default:
-                printf("\nOpcion invalida. Intente nuevamente.\n");
+                printf("Opcion invalida.\n");
                 pausar();
-                break;
         }
+
     } while (continuar);
 
     return 0;
 }
 
-// --- FUNCIONES AUXILIARES ---
+void limpiarConsola(void) {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
 void pausar(void) {
     printf("\nPresione Enter para continuar...");
-    getchar(); getchar(); // dos veces por el salto de linea pendiente
+    while (getchar() != '\n');
+}
+
+int leerOpcionMenu(void) {
+    char entrada[10];
+    int opcion = 0;
+    printf("Seleccione una opcion: ");
+    if (fgets(entrada, sizeof(entrada), stdin) != NULL)
+        sscanf(entrada, "%d", &opcion);
+    return opcion;
+}
+
+int preguntarContinuar(const char *mensaje) {
+    char entrada[10];
+    int respuesta = 0;
+    printf("%s ", mensaje);
+    if (fgets(entrada, sizeof(entrada), stdin) != NULL)
+        sscanf(entrada, "%d", &respuesta);
+    return respuesta;
 }
