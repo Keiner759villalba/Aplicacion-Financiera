@@ -27,6 +27,7 @@ int mostrarReporteTotales(void) {
             montoAnulaciones += t.monto;
         }
     }
+    
 
     fclose(archivo);
 

@@ -6,10 +6,27 @@
 #include <time.h>
 
 #define MAX_TRANSACCIONES 20
-static int compras_realizadas = 0;
 
+// Declaraciones internas
 static int leerCadena(const char *mensaje, char *dest, size_t tam);
 static void limpiarBuffer(void);
+
+// Contar compras efectivas guardadas en el archivo
+int contarComprasEfectivas() {
+    FILE *f = fopen("transacciones.dat", "rb");
+    if (!f) return 0;
+
+    Transaccion t;
+    int count = 0;
+
+    while (fread(&t, sizeof(Transaccion), 1, f)) {
+        if (t.tipo == TIPO_COMPRA && t.anulada == 0)
+            count++;
+    }
+
+    fclose(f);
+    return count;
+}
 
 int realizarCompra(Transaccion *t) {
     char pan[20];
@@ -20,8 +37,9 @@ int realizarCompra(Transaccion *t) {
 
     if (!t) return 1;
 
+    int compras_realizadas = contarComprasEfectivas();
     if (compras_realizadas >= MAX_TRANSACCIONES) {
-        printf("Se alcanzo el numero maximo de compras.\n");
+        printf("Se alcanzo el numero maximo de compras (%d).\n", MAX_TRANSACCIONES);
         return 1;
     }
 
@@ -45,6 +63,7 @@ int realizarCompra(Transaccion *t) {
         printf("Fecha de expiracion invalida o tarjeta vencida.\n");
         return 1;
     }
+    limpiarBuffer();
 
     if (!leerCadena("Ingrese el CVV: ", cvv, sizeof(cvv)))
         return 1;
@@ -62,6 +81,7 @@ int realizarCompra(Transaccion *t) {
     }
     limpiarBuffer();
 
+    // Guardar datos en la transaccion
     t->referencia = generarReferencia();
     t->monto = monto;
     strncpy(t->pan, pan, sizeof(t->pan) - 1);
@@ -77,7 +97,6 @@ int realizarCompra(Transaccion *t) {
     t->anulada = 0;
 
     guardarTransaccion(t);
-    compras_realizadas++;
 
     printf("\nCompra realizada con exito.\n");
     printf("Referencia: %d | Monto: %.2f | Franquicia: %s | Fecha: %s\n",
@@ -86,12 +105,16 @@ int realizarCompra(Transaccion *t) {
     return 0;
 }
 
+// Lectura de cadenas sin dejar saltos de linea
 static int leerCadena(const char *mensaje, char *dest, size_t tam) {
     printf("%s", mensaje);
+    fflush(stdout);
+
     if (fgets(dest, (int)tam, stdin) == NULL) {
         printf("Error al leer la entrada.\n");
         return 0;
     }
+
     size_t len = strlen(dest);
     if (len > 0 && dest[len - 1] == '\n') dest[len - 1] = '\0';
     if (strlen(dest) == 0) {
@@ -105,6 +128,8 @@ static void limpiarBuffer(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
+
+// Algoritmo de Luhn
 int validarPAN(const char *pan) {
     int len = (int)strlen(pan);
     if (len < 13 || len > 19) return 0;
@@ -124,6 +149,8 @@ int validarPAN(const char *pan) {
     }
     return (suma % 10) == 0;
 }
+
+// Validacion de fecha de expiracion
 int validarExpiracion(const char *mmYY) {
     if (strlen(mmYY) != 5 || mmYY[2] != '/') return 0;
 

@@ -2,110 +2,108 @@
 #include "transaccion.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-void cantidadTransaccionesCierre()
-{
-    int cantidad = obtenerCantidadTransacciones();
-    printf("Cantidad total de transacciones realizadas: %d\n", cantidad);
-}
-void montoTotalCierre()
+/* muestra resumen + opcion para vaciar el archivo */
+int leerEntero(const char *mensaje, int *dest);
+
+int mostrarCierre(void)
 {
     FILE *f = fopen("transacciones.dat", "rb");
-    if (!f)
-    {
-        printf("No se encontró el archivo de transacciones.\n");
-        return;
+    if (!f) {
+        printf("No se encontro el archivo de transacciones.\n");
+        return 1;
     }
 
     Transaccion t;
-    double total = 0.0;
+    int totalTransacciones = 0;
+    int comprasEfectivas = 0;
+    int anulaciones = 0;
+    int cierres = 0;
+    int reimpresiones = 0;
+    int reportes = 0;
 
-    while (fread(&t, sizeof(Transaccion), 1, f))
-    {
-        if (t.anulada == 0)
-        { // Solo sumar transacciones no anuladas
-            total += t.monto;
-        }
-    }
-    fclose(f);
-    printf("Monto total de transacciones realizadas: %.2f\n", total);
-}
+    double montoCompras = 0.0;
+    double montoAnulaciones = 0.0;
 
-void tiposDeTransaccionesCierre()
-{
-    FILE *f = fopen("transacciones.dat", "rb");
-    if (!f)
-    {
-        printf("No se encontró el archivo de transacciones.\n");
-        return;
-    }
+    while (fread(&t, sizeof(Transaccion), 1, f) == 1) {
+        totalTransacciones++;
 
-    Transaccion t;
-    int compras = 0, anulaciones = 0, cierres = 0, reimpresiones = 0, reportes = 0;
-
-    while (fread(&t, sizeof(Transaccion), 1, f))
-    {
-        if (t.anulada == 0)
-        { // Solo contar transacciones no anuladas
-            switch (t.tipo)
-            {
+        /* contar por tipo (si existe registro de tipo) */
+        switch (t.tipo) {
             case TIPO_COMPRA:
-                compras++;
+                if (t.anulada == 0) {
+                    comprasEfectivas++;
+                    montoCompras += t.monto;
+                } else {
+                    /* si la compra esta marcada como anulada la contabilizamos como anulacion */
+                    anulaciones++;
+                    montoAnulaciones += t.monto;
+                }
                 break;
             case TIPO_ANULACION:
                 anulaciones++;
+                /* si el registro de anulacion lleva monto, sumarlo tambien */
+                montoAnulaciones += t.monto;
                 break;
-            case TIPO_CIERRE:
-                cierres++;
+            
+            default:
+                /* si el tipo no esta definido, no contamos aqui */
                 break;
-            case TIPO_REIMPRESION:
-                reimpresiones++;
-                break;
-            case TIPO_REPORTE:
-                reportes++;
-                break;
-            }
         }
     }
-    fclose(f);
-    printf("Tipos de transacciones realizadas:\n");
-    printf("Compras: %d\n", compras);
-    printf("Anulaciones: %d\n", anulaciones);
-    printf("Cierres: %d\n", cierres);
-    printf("Reimpresiones: %d\n", reimpresiones);
-    printf("Reportes: %d\n", reportes);
-}
 
-int mostrarCierre()
-{
+    fclose(f);
+
+    double montoNeto = montoCompras - montoAnulaciones;
+
     limpiarConsola();
     printf("=== CIERRE DE TRANSACCIONES ===\n\n");
-    cantidadTransaccionesCierre();
-    tiposDeTransaccionesCierre();
-    montoTotalCierre();
-
+    printf("Total de registros (registros en archivo): %d\n", totalTransacciones);
+    printf("Compras efectivas: %d\n", comprasEfectivas);
+    printf("Anulaciones: %d\n", anulaciones);
+    
+    printf("\nMonto total de compras (no anuladas):     %.2f\n", montoCompras);
+    printf("Monto total de anulaciones (registradas): %.2f\n", montoAnulaciones);
+    printf("Monto neto procesado:                      %.2f\n", montoNeto);
     printf("\n==============================\n");
-    printf("Esta seguro que desea realizar el cierre? (1=Sí / 0=No): ");
-    int confirmar;
-    if (scanf("%d", &confirmar) != 1 || (confirmar != 0 && confirmar != 1))
-    {
-        printf("Entrada inválida. Cierre cancelado.\n");
+
+    int confirmar = 0;
+    if (!leerEntero("Confirma el cierre y vacia el archivo de transacciones? (1=Si / 0=No): ", &confirmar)) {
+        printf("Entrada invalida. Cierre cancelado.\n");
         return 1;
     }
-    else if (confirmar == 1)
-    {
-        FILE *f = fopen("transacciones.dat", "wb");
-        if (!f)
-        {
+    if (confirmar != 0 && confirmar != 1) {
+        printf("Entrada invalida. Cierre cancelado.\n");
+        return 1;
+    }
+    if (confirmar == 1) {
+        FILE *fw = fopen("transacciones.dat", "wb");
+        if (!fw) {
             printf("No se pudo abrir el archivo para limpiar.\n");
             return 1;
         }
-        fclose(f);
-        printf("✅ Archivo de transacciones vaciado correctamente.\n");
+        fclose(fw);
+        printf("Archivo de transacciones vaciado correctamente.\n");
+    } else {
+        printf("Cierre cancelado por el usuario.\n");
     }
-    else
-    {
-        printf("\nCierre cancelado por el usuario.\n");
-    }
+
     return 0;
+}
+
+/* helper: lee entero desde stdin con fgets y validacion */
+int leerEntero(const char *mensaje, int *dest)
+{
+    char buffer[32];
+    char *endptr;
+    printf("%s", mensaje);
+    if (fgets(buffer, sizeof(buffer), stdin) == NULL) return 0;
+    size_t len = strlen(buffer);
+    if (len > 0 && buffer[len-1] == '\n') buffer[len-1] = '\0';
+    if (buffer[0] == '\0') return 0;
+    long val = strtol(buffer, &endptr, 10);
+    if (*endptr != '\0') return 0;
+    *dest = (int)val;
+    return 1;
 }

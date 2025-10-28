@@ -1,0 +1,136 @@
+Excelente pregunta 🔥
+Tu proyecto está muy bien estructurado (módulos de compra, anulación, cierre, reporte, etc.), así que el `README.md` debe reflejar eso: **qué hace el sistema, cómo se compila, cómo se usa y quién lo desarrolló**.
+
+Aquí te dejo una versión **completa y sin tildes (para evitar problemas en consola o Markdown)**.
+Puedes copiarla directamente en tu repositorio como `README.md`.
+
+---
+
+## 💳 Sistema Financiero en C (Consola)
+
+### 🧾 Descripcion general
+
+Este proyecto implementa un **sistema financiero simulado** desarrollado en lenguaje C, ejecutado por consola.
+Permite realizar operaciones tipicas de un terminal de punto de venta (POS), como:
+
+* Registro de **compras** con validacion Luhn.
+* **Anulacion** de transacciones con confirmacion de PAN y CVV.
+* **Reimpresion** de transacciones en orden descendente.
+* **Reporte** de totales acumulados.
+* **Cierre** de operaciones con confirmacion y limpieza de datos.
+
+---
+
+### ⚙️ Funcionalidades principales
+
+| Opcion | Funcion                      | Descripcion breve                                                                                          |
+| :----: | :--------------------------- | :--------------------------------------------------------------------------------------------------------- |
+|  **1** | Realizar compra              | Solicita PAN, fecha, CVV y monto. Detecta franquicia (Visa, MasterCard, etc.) y valida con algoritmo Luhn. |
+|  **2** | Anular transaccion           | Permite anular una transaccion existente validando los ultimos 4 digitos del PAN y el CVV.                 |
+|  **3** | Cierre de transacciones      | Muestra resumen (cantidad, tipos y total) y elimina las transacciones tras confirmacion del usuario.       |
+|  **4** | Reimpresion de transacciones | Muestra todas las transacciones almacenadas en orden descendente, con PAN enmascarado.                     |
+|  **5** | Reporte de totales           | Calcula y muestra los totales acumulados por tipo de transaccion.                                          |
+|  **6** | Salir                        | Termina la aplicacion.                                                                                     |
+
+---
+
+### 🧮 Estructura de archivos
+
+```
+.
+├── main.c
+├── compra.c / compra.h
+├── anulacion.c / anulacion.h
+├── reimpresion.c / reimpresion.h
+├── reporte.c / reporte.h
+├── cierre.c / cierre.h
+├── transaccion.c / transaccion.h
+├── transacciones.dat          (archivo binario de datos)
+└── README.md
+```
+
+---
+
+### 💡 Detalles tecnicos
+
+* **Lenguaje:** C estandar (compatible con C99 o superior).
+* **Entrada/salida:** manejo con `fgets` para evitar desbordamientos.
+* **Persistencia:** uso de archivo binario `transacciones.dat`.
+* **Validaciones:**
+
+  * PAN validado con el **algoritmo de Luhn**.
+  * CVV de 3 digitos numericos.
+  * Fecha de expiracion en formato `MM/YY`.
+* **Protecciones implementadas:**
+
+  * Evita campos vacios.
+  * Enmascara PAN en impresiones (`4539********1486`).
+  * Control de buffer y limpieza de entrada (`getchar()` residual).
+
+---
+
+### 🧰 Compilacion y ejecucion
+
+#### En Linux o macOS:
+
+```bash
+gcc main.c compra.c anulacion.c reimpresion.c reporte.c cierre.c transaccion.c -o sistema_financiero
+./sistema_financiero
+```
+
+#### En Windows (con MinGW o similar):
+
+```bash
+gcc main.c compra.c anulacion.c reimpresion.c reporte.c cierre.c transaccion.c -o sistema_financiero.exe
+sistema_financiero.exe
+```
+
+---
+
+### 🧪 Ejemplo de datos de prueba (validos con Luhn)
+
+| PAN              | Franquicia       | CVV | Fecha | Monto  |
+| :--------------- | :--------------- | :-- | :---- | :----- |
+| 4539578763621486 | Visa             | 333 | 09/26 | 150000 |
+| 5500005555555559 | MasterCard       | 123 | 08/28 | 82000  |
+| 6011000990139424 | Discover         | 444 | 12/27 | 95000  |
+| 379354508162306  | American Express | 888 | 07/26 | 120000 |
+
+---
+
+### 🧠 Modulos y responsabilidades
+
+| Modulo          | Responsabilidad principal                                      |
+| :-------------- | :------------------------------------------------------------- |
+| `compra.c`      | Validacion de PAN y registro de transacciones.                 |
+| `anulacion.c`   | Anulacion con confirmacion segura.                             |
+| `reimpresion.c` | Listado en orden descendente, con listas doblemente enlazadas. |
+| `reporte.c`     | Totales de montos y conteo por tipo.                           |
+| `cierre.c`      | Eliminacion segura tras confirmacion.                          |
+| `transaccion.c` | Definicion de la estructura base y operaciones de archivo.     |
+
+---
+
+### 👨‍💻 Desarrollador
+
+**Autor:** Keiner Villalba
+**Rol:** Ingeniero de Sistemas en formacion
+**Institucion:** Universidad (practicas profesionales)
+**Fecha de inicio:** Septiembre 2025
+
+---
+
+### 📦 Version
+
+**Version actual:** 1.0
+**Ultima actualizacion:** Octubre 2025
+
+---
+
+### 📋 Notas
+
+* No utiliza librerias externas ni dependencias adicionales.
+* Totalmente portable (solo depende de `stdio.h`, `stdlib.h` y `string.h`).
+
+
+

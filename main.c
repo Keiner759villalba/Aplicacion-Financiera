@@ -39,23 +39,56 @@ int main() {
             case 1:
                 if (realizarCompra(&t) != 0) {
                     printf("\nError en la compra.\n");
+
+                    // Limpia cualquier \n pendiente antes de preguntar
+                    while (getchar() != '\n' && !feof(stdin));
+
                     if (!preguntarContinuar("Desea volver al menu principal? (1=Si / 0=Salir): "))
                         continuar = 0;
                 } else {
                     printf("\nCompra realizada correctamente.\n");
-                    if (!preguntarContinuar("Desea realizar otra compra? (1=Si / 0=No): "))
+
+                    while (getchar() != '\n' && !feof(stdin));
+
+                    if (!preguntarContinuar("Desea realizar otra transaccion? (1=Si / 0=No): "))
                         continuar = 0;
                 }
                 break;
 
             case 2:
-                anularTransaccion();
-                pausar();
+                if (anularTransaccion() != 0) {
+                    printf("\nError en la anulacion.\n");
+
+                    while (getchar() != '\n' && !feof(stdin));
+
+                    if (!preguntarContinuar("Desea volver al menu principal? (1=Si / 0=Salir): "))
+                        continuar = 0;
+                } else {
+                    printf("\nAnulacion realizada correctamente.\n");
+
+                    while (getchar() != '\n' && !feof(stdin));
+
+                    if (!preguntarContinuar("Desea realizar otra transaccion? (1=Si / 0=No): "))
+                        continuar = 0;
+                }
                 break;
 
             case 3:
-                mostrarCierre();
-                pausar();
+                if (mostrarCierre() != 0) {
+                    printf("\nError en el cierre.\n");
+
+                    while (getchar() != '\n' && !feof(stdin));
+
+                    if (!preguntarContinuar("Desea volver al menu principal? (1=Si / 0=Salir): "))
+                        continuar = 0;
+                } else {
+                    printf("\nCierre realizado correctamente.\n");
+
+                    while (getchar() != '\n' && !feof(stdin));
+
+                    if (!preguntarContinuar("Desea realizar otra transaccion? (1=Si / 0=No): "))
+                        continuar = 0;
+                }
                 break;
 
             case 4:
