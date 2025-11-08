@@ -12,14 +12,17 @@ static int leerCadena(const char *mensaje, char *dest, size_t tam);
 static void limpiarBuffer(void);
 
 // Contar compras efectivas guardadas en el archivo
-int contarComprasEfectivas() {
+int contarComprasEfectivas()
+{
     FILE *f = fopen("transacciones.dat", "rb");
-    if (!f) return 0;
+    if (!f)
+        return 0;
 
     Transaccion t;
     int count = 0;
 
-    while (fread(&t, sizeof(Transaccion), 1, f)) {
+    while (fread(&t, sizeof(Transaccion), 1, f))
+    {
         if (t.tipo == TIPO_COMPRA && t.anulada == 0)
             count++;
     }
@@ -28,17 +31,22 @@ int contarComprasEfectivas() {
     return count;
 }
 
-int realizarCompra(Transaccion *t) {
+int realizarCompra(Transaccion *t)
+{
     char pan[20];
     char franquicia[32];
     char expiry[6];
     char cvv[5];
+    char montoStr[32];
+    char cvv_str[10];
     double monto;
 
-    if (!t) return 1;
+    if (!t)
+        return 1;
 
     int compras_realizadas = contarComprasEfectivas();
-    if (compras_realizadas >= MAX_TRANSACCIONES) {
+    if (compras_realizadas >= MAX_TRANSACCIONES)
+    {
         printf("Se alcanzo el numero maximo de compras (%d).\n", MAX_TRANSACCIONES);
         return 1;
     }
@@ -47,7 +55,8 @@ int realizarCompra(Transaccion *t) {
 
     if (!leerCadena("Ingrese el PAN (Primary Account Number): ", pan, sizeof(pan)))
         return 1;
-    if (!validarPAN(pan)) {
+    if (!validarPAN(pan))
+    {
         printf("PAN invalido.\n");
         return 1;
     }
@@ -59,23 +68,32 @@ int realizarCompra(Transaccion *t) {
 
     if (!leerCadena("Ingrese la fecha de expiracion (MM/YY): ", expiry, sizeof(expiry)))
         return 1;
-    if (!validarExpiracion(expiry)) {
+    if (!validarExpiracion(expiry))
+    {
         printf("Fecha de expiracion invalida o tarjeta vencida.\n");
         return 1;
     }
     limpiarBuffer();
 
-    if (!leerCadena("Ingrese el CVV: ", cvv, sizeof(cvv)))
-        return 1;
-    int cvvlen = strlen(cvv);
-    if (!(cvvlen == 3 || cvvlen == 4)) {
-        printf("CVV invalido (3 o 4 digitos).\n");
+    printf("Ingrese el CVV: ");
+    fgets(cvv_str, sizeof(cvv_str), stdin);
+    cvv_str[strcspn(cvv_str, "\n")] = '\0'; // elimina el salto de línea
+
+    // Validar longitud
+    if (strlen(cvv_str) != 3 && strlen(cvv_str) != 4)
+    {
+        printf("CVV inválido.\n");
         return 1;
     }
 
+    printf("Ingrese el monto: ");
+    fgets(montoStr, sizeof(montoStr), stdin);
+    montoStr[strcspn(montoStr, "\n")] = '\0';
+    monto = atof(montoStr);
 
-    if(!leerCadena("Ingrese el monto de la compra: ", (char *)&monto, sizeof(monto))) {
-        printf("Monto invalido.\n");
+    if (monto <= 0.0)
+    {
+        printf("El monto debe ser mayor a cero.\n");
         return 1;
     }
 
@@ -104,43 +122,55 @@ int realizarCompra(Transaccion *t) {
 }
 
 // Lectura de cadenas sin dejar saltos de linea
-static int leerCadena(const char *mensaje, char *dest, size_t tam) {
+static int leerCadena(const char *mensaje, char *dest, size_t tam)
+{
     printf("%s", mensaje);
     fflush(stdout);
 
-    if (fgets(dest, (int)tam, stdin) == NULL) {
+    if (fgets(dest, (int)tam, stdin) == NULL)
+    {
         printf("Error al leer la entrada.\n");
         return 0;
     }
 
     size_t len = strlen(dest);
-    if (len > 0 && dest[len - 1] == '\n') dest[len - 1] = '\0';
-    if (strlen(dest) == 0) {
+    if (len > 0 && dest[len - 1] == '\n')
+        dest[len - 1] = '\0';
+    if (strlen(dest) == 0)
+    {
         printf("No se permite campo vacio.\n");
         return 0;
     }
     return 1;
 }
 
-static void limpiarBuffer(void) {
+static void limpiarBuffer(void)
+{
     int c;
-    while ((c = getchar()) != '\n' && c != EOF);
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
 }
 
 // Algoritmo de Luhn
-int validarPAN(const char *pan) {
+int validarPAN(const char *pan)
+{
     int len = (int)strlen(pan);
-    if (len < 13 || len > 19) return 0;
+    if (len < 13 || len > 19)
+        return 0;
 
     int suma = 0;
     int doble = 0;
-    for (int i = len - 1; i >= 0; i--) {
+    for (int i = len - 1; i >= 0; i--)
+    {
         int digito = pan[i] - '0';
-        if (digito < 0 || digito > 9) return 0;
+        if (digito < 0 || digito > 9)
+            return 0;
 
-        if (doble) {
+        if (doble)
+        {
             digito *= 2;
-            if (digito > 9) digito -= 9;
+            if (digito > 9)
+                digito -= 9;
         }
         suma += digito;
         doble = !doble;
@@ -149,20 +179,24 @@ int validarPAN(const char *pan) {
 }
 
 // Validacion de fecha de expiracion
-int validarExpiracion(const char *mmYY) {
-    if (strlen(mmYY) != 5 || mmYY[2] != '/') return 0;
+int validarExpiracion(const char *mmYY)
+{
+    if (strlen(mmYY) != 5 || mmYY[2] != '/')
+        return 0;
 
     int mes = (mmYY[0] - '0') * 10 + (mmYY[1] - '0');
     int anio = (mmYY[3] - '0') * 10 + (mmYY[4] - '0');
 
-    if (mes < 1 || mes > 12) return 0;
+    if (mes < 1 || mes > 12)
+        return 0;
 
     time_t now = time(NULL);
     struct tm *lt = localtime(&now);
     int anioActual = (lt->tm_year + 1900) % 100;
     int mesActual = lt->tm_mon + 1;
 
-    if (anio < anioActual || (anio == anioActual && mes < mesActual)) {
+    if (anio < anioActual || (anio == anioActual && mes < mesActual))
+    {
         return 0; // Tarjeta vencida
     }
 

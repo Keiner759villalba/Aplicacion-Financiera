@@ -38,9 +38,9 @@ void enmascararPAN(const char *pan, char *panMask) {
 const char* tipoTransaccionToString(TipoTransaccion tipo) {
     switch (tipo) {
         case TIPO_COMPRA:      return "Compra";
-        case TIPO_ANULACION:   return "Anulación";
+        case TIPO_ANULACION:   return "Anulacion";
         case TIPO_CIERRE:      return "Cierre";
-        case TIPO_REIMPRESION: return "Reimpresión";
+        case TIPO_REIMPRESION: return "Reimpresion";
         case TIPO_REPORTE:     return "Reporte";
         default:               return "Desconocido";
     }
@@ -135,6 +135,6 @@ int procesarReimpresion() {
         free(tmp);
     }
 
-    printf("\nSaliendo de reimpresión...\n");
+    printf("\nSaliendo de reimpresion...\n");
     return 0;
 }

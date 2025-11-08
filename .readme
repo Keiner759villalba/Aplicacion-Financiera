@@ -84,7 +84,8 @@ gcc main.c compra.c anulacion.c reimpresion.c reporte.c cierre.c transaccion.c -
 gcc main.c compra.c anulacion.c reimpresion.c reporte.c cierre.c transaccion.c -o sistema_financiero.exe
 sistema_financiero.exe
 ```
-
+#### En Windows usando Makefile:
+mingw32-make run
 ---
 
 ### 🧪 Ejemplo de datos de prueba (validos con Luhn)
