@@ -8,40 +8,65 @@ int transacciones_guardadas = 0;
 
 int generarReferencia() {
     int last = 0;
+
     FILE *f = fopen(REF_FILE, "r");
     if (f) {
         if (fscanf(f, "%d", &last) != 1) {
             last = 0;
         }
         fclose(f);
+    } else {
+        // Si no existe, lo creamos con valor inicial 0
+        f = fopen(REF_FILE, "w");
+        if (f) {
+            fprintf(f, "%d\n", 0);
+            fclose(f);
+            last = 0;
+        } else {
+            perror("Error creando archivo de referencia");
+            return 0; // valor seguro
+        }
     }
+
     int next = last + 1;
 
-    /* reescribir el archivo con la nueva referencia */
+    // Actualizar el archivo con el nuevo valor
     f = fopen(REF_FILE, "w");
     if (!f) {
-        /* fallo al escribir: informar por stderr y devolver algo razonable */
-        fprintf(stderr, "Error abriendo %s para escribir: %s\n", REF_FILE, strerror(errno));
-        return next; /* devolver el siguiente aunque no se haya persistido */
+        fprintf(stderr, "Error escribiendo en %s\n", REF_FILE);
+        return next;
     }
     fprintf(f, "%d\n", next);
-    fflush(f);
     fclose(f);
 
     return next;
 }
 
+
 void guardarTransaccion(const Transaccion *t) {
+    if (!t) return;
+
     FILE *f = fopen("transacciones.dat", "ab");
     if (!f) {
-        perror("Error al abrir el archivo de transacciones");
-        return;
+        // Intentar crear el archivo si no existe
+        f = fopen("transacciones.dat", "wb");
+        if (!f) {
+            perror("Error al crear el archivo de transacciones");
+            return;
+        }
+        fclose(f);
+        // Reabrir para añadir la transacción
+        f = fopen("transacciones.dat", "ab");
+        if (!f) {
+            perror("Error al abrir el archivo de transacciones");
+            return;
+        }
     }
+
     fwrite(t, sizeof(Transaccion), 1, f);
     transacciones_guardadas++;
     fclose(f);
 }
-
 void listarTransacciones() {
     FILE *f = fopen("transacciones.dat", "rb");
     if (!f) {

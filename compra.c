@@ -73,13 +73,11 @@ int realizarCompra(Transaccion *t) {
         return 1;
     }
 
-    printf("Ingrese el monto de la compra: ");
-    if (scanf("%lf", &monto) != 1 || monto <= 0.0) {
+
+    if(!leerCadena("Ingrese el monto de la compra: ", (char *)&monto, sizeof(monto))) {
         printf("Monto invalido.\n");
-        limpiarBuffer();
         return 1;
     }
-    limpiarBuffer();
 
     // Guardar datos en la transaccion
     t->referencia = generarReferencia();

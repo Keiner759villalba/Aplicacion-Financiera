@@ -1,37 +1,31 @@
-# ==============================
-# COMPILADOS Y BINARIOS
-# ==============================
+# Archivos binarios compilados
 main
 *.exe
 *.out
-*.o
-*.obj
 
-# ==============================
-# ARCHIVOS TEMPORALES O LOGS
-# ==============================
+# Archivos de datos generados en ejecución
+*.dat
 *.log
 *.tmp
+
+# Archivos de respaldo o temporales
 *~
 *.bak
 
-# ==============================
-# CARPETAS AUXILIARES
-# ==============================
-# Ignora compilaciones temporales, pero no los datos del programa
-build/
-dist/
-temp/
-
-# ==============================
-# ARCHIVOS DE CONFIGURACIÓN DE IDEs
-# ==============================
+# Archivos de configuración del sistema o del compilador
 .vscode/
 .idea/
-*.code-workspace
+.DS_Store
 
-# ==============================
-# PERMITIR ARCHIVOS DE DATOS
-# ==============================
-# Si tus .dat están en la carpeta app/, aseguramos que se suban
-!app/*.dat
+# Carpeta de compilación (si usas una)
+build/
+bin/
+obj/
+
+# Archivos intermedios de compilación
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.lib
