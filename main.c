@@ -18,6 +18,13 @@ int main() {
     int continuar = 1;
     Transaccion t;
 
+    // Reset reference persistence at startup (truncate or create empty file)
+    // This ensures references start from 1 each run (or until cierre resets differently).
+    {
+        FILE *fref = fopen("last_ref.dat", "wb");
+        if (fref) fclose(fref);
+    }
+
     do {
         limpiarConsola();
 
@@ -37,59 +44,41 @@ int main() {
 
         switch (opcion) {
             case 1:
+                // MODO COMPRA: ejecutar compra, mostrar datos, pausar y luego limpiar pantalla
+                printf(">>> MODO COMPRA <<<\n\n");
                 if (realizarCompra(&t) != 0) {
                     printf("\nError en la compra.\n");
-
-                    // Limpia cualquier \n pendiente antes de preguntar
-                    while (getchar() != '\n' && !feof(stdin));
-
-                    if (!preguntarContinuar("Desea volver al menu principal? (1=Si / 0=Salir): "))
-                        continuar = 0;
+                    pausar();           // permitir ver el error
                 } else {
-                    printf("\nCompra realizada correctamente.\n");
-
-                    while (getchar() != '\n' && !feof(stdin));
-
-                    if (!preguntarContinuar("Desea realizar otra transaccion? (1=Si / 0=No): "))
-                        continuar = 0;
+                    pausar();           // mostrar los datos de la compra antes de limpiar
                 }
+                limpiarConsola();
                 break;
 
             case 2:
+                // Anulacion: mostrar resultado y volver al menu (no cerrar la aplicacion)
                 if (anularTransaccion() != 0) {
                     printf("\nError en la anulacion.\n");
-
-                    while (getchar() != '\n' && !feof(stdin));
-
-                    if (!preguntarContinuar("Desea volver al menu principal? (1=Si / 0=Salir): "))
-                        continuar = 0;
                 } else {
                     printf("\nAnulacion realizada correctamente.\n");
-
-                    while (getchar() != '\n' && !feof(stdin));
-
-                    if (!preguntarContinuar("Desea realizar otra transaccion? (1=Si / 0=No): "))
-                        continuar = 0;
                 }
+                pausar();
                 break;
 
-            case 3:
-                if (mostrarCierre() != 0) {
-                    printf("\nError en el cierre.\n");
-
-                    while (getchar() != '\n' && !feof(stdin));
-
-                    if (!preguntarContinuar("Desea volver al menu principal? (1=Si / 0=Salir): "))
-                        continuar = 0;
-                } else {
+            case 3: {
+                int rc = mostrarCierre();
+                if (rc == 0) {
                     printf("\nCierre realizado correctamente.\n");
-
-                    while (getchar() != '\n' && !feof(stdin));
-
-                    if (!preguntarContinuar("Desea realizar otra transaccion? (1=Si / 0=No): "))
-                        continuar = 0;
+                    pausar();
+                } else if (rc == 2) {
+                    /* User cancelled: volver al menu */
+                    pausar();
+                } else {
+                    printf("\nError en el cierre.\n");
+                    pausar();
                 }
                 break;
+            }
 
             case 4:
                 procesarReimpresion();

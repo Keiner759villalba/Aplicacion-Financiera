@@ -4,12 +4,61 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h> // added for case-insensitive compare
 
 #define MAX_TRANSACCIONES 20
 
-// Declaraciones internas
+
 static int leerCadena(const char *mensaje, char *dest, size_t tam);
 static void limpiarBuffer(void);
+
+
+static int stricmp_local(const char *a, const char *b)
+{
+    if (!a || !b)
+        return (a == b) ? 0 : (a ? 1 : -1);
+    while (*a && *b)
+    {
+        int ca = tolower((unsigned char)*a);
+        int cb = tolower((unsigned char)*b);
+        if (ca != cb)
+            return ca - cb;
+        a++;
+        b++;
+    }
+    return tolower((unsigned char)*a) - tolower((unsigned char)*b);
+}
+
+
+static int franquiciaAceptada(const char *fr)
+{
+    if (!fr)
+        return 0;
+    if (stricmp_local(fr, "Visa") == 0)
+        return 1;
+    if (stricmp_local(fr, "MasterCard") == 0)
+        return 1;
+    if (stricmp_local(fr, "American Express") == 0)
+        return 1;
+    if (stricmp_local(fr, "Discover") == 0)
+        return 1;
+    
+    return 0;
+}
+
+//cuenta todas las transacciones almacenadas en el archivo
+static int contarTransaccionesArchivo(void) {
+    FILE *f = fopen("transacciones.dat", "rb");
+    if (!f) return 0;
+    if (fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        return 0;
+    }
+    long size = ftell(f);
+    fclose(f);
+    if (size <= 0) return 0;
+    return (int)(size / sizeof(Transaccion));
+}
 
 // Contar compras efectivas guardadas en el archivo
 int contarComprasEfectivas()
@@ -66,6 +115,13 @@ int realizarCompra(Transaccion *t)
     franquicia[sizeof(franquicia) - 1] = '\0';
     printf("Franquicia detectada: %s\n", franquicia);
 
+    // New: reject unknown/unaccepted franquicia
+    if (!franquiciaAceptada(franquicia))
+    {
+        printf("La franquicia '%s' no es aceptada. Compra cancelada.\n", franquicia);
+        return 1;
+    }
+
     if (!leerCadena("Ingrese la fecha de expiracion (MM/YY): ", expiry, sizeof(expiry)))
         return 1;
     if (!validarExpiracion(expiry))
@@ -86,10 +142,40 @@ int realizarCompra(Transaccion *t)
         return 1;
     }
 
+   
     printf("Ingrese el monto: ");
-    fgets(montoStr, sizeof(montoStr), stdin);
+    if (fgets(montoStr, sizeof(montoStr), stdin) == NULL) {
+        printf("Error leyendo monto.\n");
+        return 1;
+    }
     montoStr[strcspn(montoStr, "\n")] = '\0';
-    monto = atof(montoStr);
+
+    // eliminar espacios al inicio/fin
+    char *start = montoStr;
+    while (*start == ' ' || *start == '\t') start++;
+    // mover la cadena al inicio si habia espacios
+    if (start != montoStr) memmove(montoStr, start, strlen(start) + 1);
+
+    // normalizar coma a punto
+    for (char *p = montoStr; *p; ++p) if (*p == ',') *p = '.';
+
+    if (strlen(montoStr) == 0) {
+        printf("Monto no puede estar vacio.\n");
+        return 1;
+    }
+
+    // si contiene punto, usar atof; si no, interpretarlo como centavos y dividir por 100
+    if (strchr(montoStr, '.') != NULL) {
+        monto = atof(montoStr);
+    } else {
+        char *endptr = NULL;
+        long long cents = strtoll(montoStr, &endptr, 10);
+        if (*endptr != '\0') {
+            printf("Monto invalido.\n");
+            return 1;
+        }
+        monto = cents / 100.0;
+    }
 
     if (monto <= 0.0)
     {
@@ -98,12 +184,11 @@ int realizarCompra(Transaccion *t)
     }
 
     // Guardar datos en la transaccion
-    t->referencia = generarReferencia();
+    t->referencia = contarTransaccionesArchivo() + 1;
     t->monto = monto;
     strncpy(t->pan, pan, sizeof(t->pan) - 1);
     t->pan[sizeof(t->pan) - 1] = '\0';
 
-    
     strncpy(t->cvv, cvv_str, sizeof(t->cvv) - 1);
     t->cvv[sizeof(t->cvv) - 1] = '\0';
 

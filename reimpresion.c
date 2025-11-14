@@ -94,6 +94,9 @@ void mostrarTransaccion(const Transaccion *t) {
     printf("=========================================\n");
 }
 
+// Declare the console clear function implemented in main.c
+extern void limpiarConsola(void);
+
 // === Reimpresión interactiva ===
 int procesarReimpresion() {
     NodoDoble *actual = cargarTransacciones();
@@ -107,7 +110,7 @@ int procesarReimpresion() {
 
     char tecla;
     do {
-        system("cls"); // Limpia pantalla en cada movimiento
+        limpiarConsola(); // use centralized cleaner from main.c
         mostrarTransaccion(&actual->dato);
 
         // Mostrar hints de navegación

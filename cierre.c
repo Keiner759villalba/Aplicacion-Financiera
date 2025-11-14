@@ -85,8 +85,18 @@ int mostrarCierre(void)
         }
         fclose(fw);
         printf("Archivo de transacciones vaciado correctamente.\n");
+        /* Reiniciar contador de referencia */
+        FILE *fref = fopen("last_ref.dat", "wb");
+        if (!fref) {
+            printf("Advertencia: no se pudo reiniciar last_ref.dat. Verifique permisos.\n");
+            return 1;
+        }
+        fclose(fref);
+        printf("Cierre de lote realizado correctamente. Archivos reiniciados.\n");
+        return 0; 
     } else {
-        printf("Cierre cancelado por el usuario.\n");
+        printf("Cierre cancelado por el usuario. Regresando al menu.\n");
+        return 2; 
     }
 
     return 0;
