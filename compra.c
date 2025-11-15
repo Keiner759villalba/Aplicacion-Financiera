@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <ctype.h> // added for case-insensitive compare
+#include <ctype.h> 
 
 #define MAX_TRANSACCIONES 20
 
@@ -143,7 +143,8 @@ int realizarCompra(Transaccion *t)
     }
 
    
-    printf("Ingrese el monto: ");
+    /* --- Monto: aceptar "1234" => 12.34 o "12.34" / "12,34" --- */
+    printf("Ingrese el monto (ej: 1234 -> 12.34 o 12.34): ");
     if (fgets(montoStr, sizeof(montoStr), stdin) == NULL) {
         printf("Error leyendo monto.\n");
         return 1;
@@ -165,16 +166,24 @@ int realizarCompra(Transaccion *t)
     }
 
     // si contiene punto, usar atof; si no, interpretarlo como centavos y dividir por 100
+    long long centavos = 0;
     if (strchr(montoStr, '.') != NULL) {
         monto = atof(montoStr);
+        centavos = (long long)(monto * 100 + 0.5); // redondear a centavos
     } else {
         char *endptr = NULL;
-        long long cents = strtoll(montoStr, &endptr, 10);
+        centavos = strtoll(montoStr, &endptr, 10);
         if (*endptr != '\0') {
             printf("Monto invalido.\n");
             return 1;
         }
-        monto = cents / 100.0;
+        monto = centavos / 100.0;
+    }
+
+    // Validar que no exceda 12 digitos
+    if (centavos >= 1000000000000LL) {
+        printf("Monto maximo permitido.\n");
+        return 1;
     }
 
     if (monto <= 0.0)
